@@ -73,10 +73,10 @@ export class PostgresGraphRepository implements GraphRepository {
     const nodesResult = await this.db.query<NodeRow>(
       `SELECT id,label,description,domain,education_level,node_type,difficulty,aliases,map_x,map_y
        FROM knowledge_nodes
-       WHERE map_x BETWEEN $1 AND $2 AND map_y BETWEEN $3 AND $4
+       WHERE map_point <@ box(point($1,$2), point($3,$4))
        ORDER BY map_x,map_y
        LIMIT $5`,
-      [bounds.minX, bounds.maxX, bounds.minY, bounds.maxY, safeLimit]
+      [bounds.minX, bounds.minY, bounds.maxX, bounds.maxY, safeLimit]
     );
     const nodes = nodesResult.rows
       .filter((row) => Number.isFinite(row.map_x) && Number.isFinite(row.map_y))
