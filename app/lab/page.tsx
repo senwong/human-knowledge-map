@@ -13,7 +13,7 @@ function layoutNodes(nodes: CanonicalKnowledgeNode[]): Node[] {
     const domain = domainIndex.get(node.domain) ?? 0;
     return {
       id: node.id,
-      data: { label: node.label, ...node },
+      data: { ...node },
       position: { x: domain * 520 + (index % 5) * 150, y: Math.floor(index / 5) * 120 },
       style: { width: 140, fontSize: 12, borderRadius: 14, border: '1px solid rgba(255,255,255,.15)', background: '#0f172a', color: 'white' }
     };
