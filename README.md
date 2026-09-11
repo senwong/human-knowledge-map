@@ -10,7 +10,7 @@ Human Knowledge Map treats knowledge as a graph rather than a list of courses. T
 2. **Curriculum Graph** — good ways to learn it.
 3. **Personal Knowledge Graph** — what a learner already knows, is learning, or is likely to forget.
 
-## Current version: v4.2
+## Current version: v5.2
 
 ### Explorer and learning layer
 
@@ -38,44 +38,65 @@ Human Knowledge Map treats knowledge as a graph rather than a list of courses. T
 - v3.1 Graph Metrics
 - v3.2 Dataset Registry
 
-### Real data and large-graph architecture
+### Large-graph architecture
 
-- **v3.3 Math Foundation Dataset** — curated concepts from counting and arithmetic through algebra, calculus, probability, linear algebra and modern AI prerequisites.
-- **v3.4 Graph Repository** — storage-independent graph access abstraction with pagination and neighborhood traversal.
-- **v3.5 Spatial Index** — grid-based viewport lookup so clients do not need the entire graph in memory.
-- **v3.6 LOD Clustering** — level-of-detail clusters based on zoom and visible-node pressure.
-- **v3.7 Graph Query API** — `GET /api/graph` supports pagination, domain filtering and local-neighborhood loading.
-- **v3.8 Graph Chunks** — partition and manifest support for sharded graph delivery.
-- **v3.9 Search Index** — lightweight Unicode-aware knowledge search.
-- **v4.0 Search API** — `GET /api/search?q=...` for server-side knowledge discovery.
-- **v4.1 Stress Graph Generator** — generates synthetic 100k-node datasets for performance work.
-- **v4.2 Large Graph Lab** — `/lab` progressively loads graph slices and neighborhoods instead of rendering the entire graph.
+- v3.3 Math Foundation Dataset
+- v3.4 Graph Repository
+- v3.5 Spatial Index
+- v3.6 LOD Clustering
+- v3.7 Graph Query API
+- v3.8 Graph Chunks
+- v3.9 Search Index
+- v4.0 Search API
+- v4.1 Stress Graph Generator
+- v4.2 Large Graph Lab
 
-The first curated path still demonstrates the central idea:
+### Production data layer
+
+- **v4.3 PostgreSQL Schema** — normalized nodes, edges, provenance and indexes for persistent graph storage.
+- **v4.4 Graph Change Sets** — all edits are represented as atomic node/edge mutations.
+- **v4.5 Version History** — commits change sets into numbered graph snapshots for rollback and auditing.
+- **v4.6 Review Workflow** — draft → review → approved/rejected → published lifecycle.
+- **v4.7 Ingestion Jobs** — tracks extraction, normalization, dedupe, validation and publication stages.
+- **v4.8 Math Curriculum Catalog** — expands the curated mathematics backbone across arithmetic, algebra, geometry, calculus, linear algebra and probability.
+- **v4.9 Canonical Merge Engine** — decides whether incoming concepts should insert, merge or enter human review.
+- **v5.0 Review Queue API** — `GET/POST /api/review` provides the first backend surface for editorial review.
+- **v5.1 Graph Event Log** — append-only incremental events make downstream sync and cache invalidation possible.
+- **v5.2 PostgreSQL Repository Adapter** — implements the existing `GraphRepository` contract over SQL, including filters and recursive neighborhood traversal.
+
+The central learning path remains easy to inspect:
 
 `计数 → 自然数 → 加法 → 乘法 → 分数 → 代数 → 函数 → 微积分 / 线性代数 / 概率 → 神经网络 → Attention → Transformer → FlashAttention`
 
-## Large graph strategy
-
-The browser should never receive the complete human knowledge graph. The intended flow is:
+## Production knowledge lifecycle
 
 ```text
-Canonical Knowledge Store
-        ↓
-GraphRepository
-        ↓
-Spatial / domain / search indexes
-        ↓
-Chunk + neighborhood query API
-        ↓
-Viewport request
-        ↓
-LOD cluster or concrete nodes
-        ↓
-React Flow / future WebGL renderer
+Curriculum / textbook / paper / expert / AI proposal
+                    ↓
+               Ingestion Job
+                    ↓
+        Normalize + dedupe + validate
+                    ↓
+             Canonical Merge
+                    ↓
+              Change Set
+                    ↓
+               Review Queue
+                    ↓
+                 Publish
+                    ↓
+         PostgreSQL Knowledge Store
+                    ↓
+             Graph Event Log
+                    ↓
+ Graph API / Search / LOD / viewport clients
 ```
 
-This allows the storage layer to evolve from the current in-memory repository to PostgreSQL, Neo4j or another graph service without rewriting the explorer.
+The project intentionally separates proposals from canonical knowledge. AI-generated content never becomes authoritative merely because a model produced it.
+
+## PostgreSQL
+
+The initial schema is in `db/schema.sql`. `PostgresGraphRepository` is dependency-independent: provide a small SQL executor backed by your preferred PostgreSQL client.
 
 ## Run locally
 
@@ -103,7 +124,7 @@ npm run stress:graph -- 100000 ./stress-graph.json
 
 ## DeepSeek
 
-Copy `.env.example` to `.env.local` and set your key. `POST /api/expand` proposes AI-generated graph expansions. AI output is never canonical by default; it must pass staging, provenance, deduplication, quality scoring and graph validation.
+Copy `.env.example` to `.env.local` and set your key. `POST /api/expand` proposes AI-generated graph expansions. AI output must pass staging, provenance, deduplication, quality scoring, graph validation and review before publication.
 
 ## Stack
 
@@ -111,6 +132,7 @@ Copy `.env.example` to `.env.local` and set your key. `POST /api/expand` propose
 - React
 - TypeScript
 - React Flow
+- PostgreSQL-ready repository layer
 - DeepSeek API (optional graph expansion)
 
-See `docs/ARCHITECTURE.md` and `docs/ROADMAP.md` for the product and technical direction.
+See `docs/ARCHITECTURE.md` and `docs/ROADMAP.md` for product and technical direction.
