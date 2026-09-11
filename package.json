@@ -12,6 +12,7 @@
     "stress:graph": "node scripts/generate-stress-graph.mjs"
   },
   "dependencies": {
+    "@xyflow/react": "^12.3.6",
     "graphology": "^0.26.0",
     "next": "^15.2.4",
     "pg": "^8.13.1",
