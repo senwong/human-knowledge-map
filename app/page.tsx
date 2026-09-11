@@ -69,7 +69,7 @@ function layoutNodes(nodes: CanonicalKnowledgeNode[], learner: ReturnType<typeof
       },
       data: {
         label: node.label,
-        description: node.description ?? '',
+        description: '',
         domain: node.domain,
         educationLevel: node.educationLevel,
         difficulty: node.difficulty,
@@ -209,7 +209,7 @@ export default function Home() {
           {selected ? <>
             <div className="detail-badges"><span>{selected.domain}</span><span>{selected.educationLevel}</span><span>难度 {selected.difficulty}</span></div>
             <h2>{selected.label}</h2>
-            <p className="detail-description">{selected.description || `${selected.label} 是当前知识图谱中的 ${selected.type} 节点。`}</p>
+            <p className="detail-description">{selected.label} 是当前知识图谱中的 {selected.type} 节点；点击相关知识可以继续向外探索。</p>
             <dl><div><dt>类型</dt><dd>{selected.type}</dd></div><div><dt>难度</dt><dd>{selected.difficulty}</dd></div><div><dt>来源可信度</dt><dd>{selectedId ? sourceConfidence(selectedId) : 0}%</dd></div></dl>
 
             <section className="panel-section"><h3>相关知识</h3>{related.length ? related.map((node) => <button className="recommendation" key={node.id} onClick={() => void expandNode(node.id, 1)}><strong>{node.label}</strong><span>{node.domain} · {node.educationLevel}</span></button>) : <p className="muted">单击当前节点后会加载它的直接相关知识。</p>}</section>
