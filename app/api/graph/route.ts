@@ -1,10 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { mathFoundationEdges, mathFoundationNodes } from '../../../src/data/math-foundation';
-import { InMemoryGraphRepository } from '../../../src/lib/graph-repository';
-
-const repository = new InMemoryGraphRepository(mathFoundationNodes, mathFoundationEdges);
+import { createGraphRepository } from '../../../src/lib/repository-factory';
 
 export async function GET(request: NextRequest) {
+  const repository = await createGraphRepository();
   const params = request.nextUrl.searchParams;
   const nodeId = params.get('node');
   if (nodeId) {
