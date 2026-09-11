@@ -3,6 +3,7 @@ import type { CanonicalKnowledgeNode } from '../data/math-foundation';
 export interface MapPosition { x: number; y: number; }
 export interface MapBounds { minX: number; minY: number; maxX: number; maxY: number; }
 export interface MapKnowledgeNode extends CanonicalKnowledgeNode {
+  description?: string;
   x: number;
   y: number;
   isCluster?: boolean;
@@ -33,7 +34,7 @@ export function deterministicMapPosition(node: Pick<CanonicalKnowledgeNode, 'id'
   };
 }
 
-export function withMapPosition(node: CanonicalKnowledgeNode & Partial<MapPosition>): MapKnowledgeNode {
+export function withMapPosition(node: CanonicalKnowledgeNode & Partial<MapPosition> & { description?: string }): MapKnowledgeNode {
   const fallback = deterministicMapPosition(node);
   return { ...node, x: Number.isFinite(node.x) ? Number(node.x) : fallback.x, y: Number.isFinite(node.y) ? Number(node.y) : fallback.y };
 }
@@ -58,6 +59,7 @@ export function clusterForZoom(nodes: MapKnowledgeNode[], zoom: number): MapKnow
     result.push({
       id: `cluster:${cellSize}:${key}`,
       label: domains.size === 1 ? `${members[0].domain} · ${members.length}` : `${members.length} 个知识点`,
+      description: `当前区域聚合了 ${members.length} 个知识点，继续放大可查看具体节点。`,
       domain: domains.size === 1 ? members[0].domain : '跨领域',
       educationLevel: 'mixed',
       type: 'concept',
