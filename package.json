@@ -1,12 +1,13 @@
 {
   "name": "human-knowledge-map",
-  "version": "3.2.0",
+  "version": "4.2.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "stress:graph": "node scripts/generate-stress-graph.mjs"
   },
   "dependencies": {
     "@xyflow/react": "^12.3.6",
