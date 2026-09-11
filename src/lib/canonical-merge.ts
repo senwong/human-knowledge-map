@@ -22,7 +22,6 @@ export function mergeCanonicalNode(base: CanonicalKnowledgeNode, incoming: Canon
     ...base,
     ...incoming,
     id: base.id,
-    description: incoming.description.length > base.description.length ? incoming.description : base.description,
     aliases: [...new Set([...(base.aliases ?? []), ...(incoming.aliases ?? []), incoming.label].filter((value) => value !== base.label))]
   };
 }
