@@ -26,7 +26,7 @@ export interface SqlExecutor {
 
 let sharedSqlExecutor: SqlExecutor | undefined;
 
-async function createPostgresExecutor(config: DatabaseConfig): Promise<SqlExecutor> {
+export async function createSqlExecutor(config: DatabaseConfig = getDatabaseConfig()): Promise<SqlExecutor> {
   if (sharedSqlExecutor) return sharedSqlExecutor;
   if (!config.url) throw new Error('DATABASE_URL is required when GRAPH_STORE=postgres.');
 
@@ -50,7 +50,7 @@ async function createPostgresExecutor(config: DatabaseConfig): Promise<SqlExecut
 export async function createGraphRepository(options?: { sql?: SqlExecutor }): Promise<GraphRepository> {
   const config = getDatabaseConfig();
   if (config.kind === 'postgres') {
-    const sql = options?.sql ?? await createPostgresExecutor(config);
+    const sql = options?.sql ?? await createSqlExecutor(config);
     const { PostgresGraphRepository } = await import('./postgres-graph-repository');
     return new PostgresGraphRepository(sql);
   }
