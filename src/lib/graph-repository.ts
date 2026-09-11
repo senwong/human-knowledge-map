@@ -1,4 +1,5 @@
 import type { CanonicalKnowledgeEdge, CanonicalKnowledgeNode } from '../data/math-foundation';
+import { deterministicMapPosition, type MapBounds, type MapKnowledgeNode } from './map-layout';
 
 export interface GraphQuery {
   domain?: string;
@@ -14,10 +15,17 @@ export interface GraphSlice {
   total: number;
 }
 
+export interface ViewportGraphSlice {
+  nodes: MapKnowledgeNode[];
+  edges: CanonicalKnowledgeEdge[];
+  total: number;
+}
+
 export interface GraphRepository {
   getNode(id: string): Promise<CanonicalKnowledgeNode | undefined>;
   query(query?: GraphQuery): Promise<GraphSlice>;
   neighbors(id: string, depth?: number): Promise<GraphSlice>;
+  viewport(bounds: MapBounds, limit?: number): Promise<ViewportGraphSlice>;
 }
 
 export class InMemoryGraphRepository implements GraphRepository {
@@ -39,7 +47,7 @@ export class InMemoryGraphRepository implements GraphRepository {
     if (query.educationLevel) filtered = filtered.filter((node) => node.educationLevel === query.educationLevel);
     const total = filtered.length;
     const offset = Math.max(0, query.offset ?? 0);
-    const limit = Math.min(1000, Math.max(1, query.limit ?? 200));
+    const limit = Math.min(5000, Math.max(1, query.limit ?? 200));
     const nodes = filtered.slice(offset, offset + limit);
     const visible = new Set(nodes.map((node) => node.id));
     const edges = this.edges.filter((edge) => visible.has(edge.source) && visible.has(edge.target));
@@ -61,5 +69,15 @@ export class InMemoryGraphRepository implements GraphRepository {
     const nodes = [...visible].map((nodeId) => this.nodeById.get(nodeId)).filter((node): node is CanonicalKnowledgeNode => Boolean(node));
     const edges = this.edges.filter((edge) => visible.has(edge.source) && visible.has(edge.target));
     return { nodes, edges, total: nodes.length };
+  }
+
+  async viewport(bounds: MapBounds, limit = 2500): Promise<ViewportGraphSlice> {
+    const positioned = this.nodes.map((node) => ({ ...node, ...deterministicMapPosition(node) }));
+    const matches = positioned
+      .filter((node) => node.x >= bounds.minX && node.x <= bounds.maxX && node.y >= bounds.minY && node.y <= bounds.maxY)
+      .slice(0, Math.min(5000, Math.max(1, limit)));
+    const visible = new Set(matches.map((node) => node.id));
+    const edges = this.edges.filter((edge) => visible.has(edge.source) && visible.has(edge.target));
+    return { nodes: matches, edges, total: positioned.length };
   }
 }
