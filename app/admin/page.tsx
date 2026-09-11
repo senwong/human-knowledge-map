@@ -29,8 +29,8 @@ export default function AdminPage() {
 
   return <main style={{minHeight:'100vh',background:'#07111f',color:'#e5edf7',padding:28,fontFamily:'system-ui'}}>
     <header style={{display:'flex',justifyContent:'space-between',gap:20,alignItems:'center',marginBottom:24}}>
-      <div><div style={{fontSize:12,letterSpacing:2,color:'#67e8f9'}}>HUMAN KNOWLEDGE MAP · ADMIN · v6.2</div><h1 style={{margin:'8px 0'}}>Knowledge Operations</h1><p style={{color:'#94a3b8',margin:0}}>审核、数据集、发布和图谱质量的运营入口。</p></div>
-      <div style={{display:'flex',gap:14}}><a href="/lab" style={{color:'#7dd3fc'}}>Large Graph Lab</a><a href="/" style={{color:'#7dd3fc'}}>返回知识地图</a></div>
+      <div><div style={{fontSize:12,letterSpacing:2,color:'#67e8f9'}}>HUMAN KNOWLEDGE MAP · ADMIN · v7.2</div><h1 style={{margin:'8px 0'}}>Knowledge Operations</h1><p style={{color:'#94a3b8',margin:0}}>审核、生成、质量、数据集和发布的统一运营入口。</p></div>
+      <div style={{display:'flex',gap:14,flexWrap:'wrap'}}><a href="/admin/review" style={{color:'#7dd3fc'}}>Review</a><a href="/admin/generate" style={{color:'#7dd3fc'}}>Generate</a><a href="/admin/quality" style={{color:'#7dd3fc'}}>Quality</a><a href="/lab" style={{color:'#7dd3fc'}}>Large Graph Lab</a><a href="/" style={{color:'#7dd3fc'}}>知识地图</a></div>
     </header>
     <div style={{padding:'10px 14px',borderRadius:12,marginBottom:18,background:remote?.health.status==='attention'?'#3b1d24':'#0d2a27',border:'1px solid #29485b',color:'#cbd5e1'}}>
       {error ? `Admin API: ${error}` : remote ? `系统状态：${remote.health.status} · ${remote.health.blockers.length ? remote.health.blockers.join('；') : '暂无运营阻塞'}` : '正在加载运营状态…'}
@@ -39,9 +39,9 @@ export default function AdminPage() {
     {tab==='overview' && <section style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(180px,1fr))',gap:14}}>{[
       ['Canonical nodes',canonicalNodes],['Relations',canonicalEdges],['Domains',metrics.domains],['Isolated',metrics.isolatedNodes],['Scaffold nodes',remote?.curriculumScaffold.nodes ?? '—'],['Review queue',remote?.operations.reviewQueue ?? '—'],['Datasets',datasets.datasets],['Published datasets',remote?.operations.publishedDatasets ?? datasets.published]
     ].map(([label,value])=><article key={String(label)} style={{padding:18,border:'1px solid #1f334a',borderRadius:16,background:'#0b1728'}}><div style={{color:'#94a3b8',fontSize:13}}>{label}</div><strong style={{fontSize:28}}>{value}</strong></article>)}</section>}
-    {tab==='review' && <Panel title="Review queue" text={`待审核 change-set：${remote?.operations.reviewQueue ?? '—'}；已批准待发布：${remote?.operations.approvedWaitingPublish ?? '—'}。AI、课程标准和批量导入都必须经过同一审核流。`} />}
+    {tab==='review' && <Panel title="Review queue" text={`待审核 change-set：${remote?.operations.reviewQueue ?? '—'}；已批准待发布：${remote?.operations.approvedWaitingPublish ?? '—'}。进入 /admin/review 可逐项检查。`} />}
     {tab==='datasets' && <section style={{display:'grid',gap:10}}>{starterDatasets.map((d)=><article key={d.id} style={{padding:16,border:'1px solid #1f334a',borderRadius:14,background:'#0b1728'}}><strong>{d.name}</strong><div style={{color:'#94a3b8',marginTop:5}}>{d.domain} · {d.language} · {d.status}</div></article>)}</section>}
-    {tab==='publish' && <Panel title="Publish pipeline" text="approved change-set → canonical merge → release manifest → PostgreSQL → graph event。每次数据发布都有独立 data version 和可比较的 release manifest。" />}
+    {tab==='publish' && <Panel title="Publish pipeline" text="approved change-set → canonical merge → release manifest → repository transaction → graph event。POST /api/publish 提供发布计划和 rollback-plan 接口。" />}
     {remote?.curriculumScaffold && <p style={{color:'#64748b',fontSize:12,marginTop:24}}>Curriculum scaffold: {remote.curriculumScaffold.note}</p>}
   </main>;
 }
