@@ -169,9 +169,62 @@ Generate a 100k-node stress dataset:
 npm run stress:graph -- 100000 ./stress-graph.json
 ```
 
+## Docker deployment
+
+The application image is based on Debian Bookworm and configures the default APT source to:
+
+```text
+https://mirrors.ustc.edu.cn/debian
+```
+
+The default Compose stack runs the Next.js application together with PostgreSQL 17 (Debian Bookworm).
+
+Prepare environment variables:
+
+```bash
+cp .env.example .env
+# edit POSTGRES_PASSWORD and DEEPSEEK_API_KEY
+```
+
+Start the full stack:
+
+```bash
+sh scripts/deploy.sh up
+```
+
+Useful commands:
+
+```bash
+sh scripts/deploy.sh status
+sh scripts/deploy.sh logs
+sh scripts/deploy.sh restart
+sh scripts/deploy.sh pull
+sh scripts/deploy.sh down
+```
+
+Apply database schema and migrations manually:
+
+```bash
+sh scripts/migrate.sh
+```
+
+The legacy convenience command also starts the Compose stack:
+
+```bash
+sh scripts/start.sh
+```
+
+By default the service listens on port `3000`. Override it in `.env` with `PORT=8080` or another port.
+
+`reset-db` deletes the PostgreSQL Docker volume and all persisted knowledge data, and therefore requires typing `RESET` interactively:
+
+```bash
+sh scripts/deploy.sh reset-db
+```
+
 ## DeepSeek
 
-Copy `.env.example` to `.env.local` and set your key. `POST /api/expand` proposes AI-generated graph expansions. AI output must pass staging, provenance, deduplication, quality scoring, graph validation and review before publication.
+Copy `.env.example` to `.env.local` for a non-Docker local environment and set your key. `POST /api/expand` proposes AI-generated graph expansions. AI output must pass staging, provenance, deduplication, quality scoring, graph validation and review before publication.
 
 ## Stack
 
@@ -179,7 +232,8 @@ Copy `.env.example` to `.env.local` and set your key. `POST /api/expand` propose
 - React
 - TypeScript
 - React Flow
-- PostgreSQL-ready repository layer
+- PostgreSQL-backed repository layer
+- Docker / Docker Compose
 - DeepSeek API (optional graph expansion)
 
 See `docs/ARCHITECTURE.md` and `docs/ROADMAP.md` for product and technical direction.
