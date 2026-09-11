@@ -27,10 +27,13 @@ export function useLearnerState(initial: LearnerState = {}) {
   }, [state]);
 
   const setRecord = (nodeId: string, patch: Partial<LearnerRecord>) => {
-    setState((current) => ({
-      ...current,
-      [nodeId]: { status: 'unlearned', mastery: 0, ...current[nodeId], ...patch }
-    }));
+    setState((current) => {
+      const existing = current[nodeId] ?? { status: 'unlearned' as const, mastery: 0 };
+      return {
+        ...current,
+        [nodeId]: { ...existing, ...patch }
+      };
+    });
   };
 
   const progress = useMemo(() => {
