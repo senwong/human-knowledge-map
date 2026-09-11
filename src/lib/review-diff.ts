@@ -1,4 +1,5 @@
 import type { GraphChangeSet, GraphMutation } from './graph-mutations';
+import { canonicalEdgeId } from './graph-mutations';
 
 export interface ReviewDiffItem {
   kind: GraphMutation['type'];
@@ -10,7 +11,7 @@ export function buildReviewDiff(changeSet: GraphChangeSet): ReviewDiffItem[] {
   return changeSet.mutations.map((mutation) => {
     if (mutation.type === 'upsert-node') return { kind: mutation.type, key: mutation.node.id, summary: `Upsert node: ${mutation.node.label}` };
     if (mutation.type === 'delete-node') return { kind: mutation.type, key: mutation.nodeId, summary: `Delete node: ${mutation.nodeId}` };
-    if (mutation.type === 'upsert-edge') return { kind: mutation.type, key: mutation.edge.id, summary: `Upsert edge: ${mutation.edge.source} → ${mutation.edge.target} (${mutation.edge.relation})` };
+    if (mutation.type === 'upsert-edge') return { kind: mutation.type, key: canonicalEdgeId(mutation.edge), summary: `Upsert edge: ${mutation.edge.source} → ${mutation.edge.target} (${mutation.edge.relation})` };
     return { kind: mutation.type, key: mutation.edgeId, summary: `Delete edge: ${mutation.edgeId}` };
   });
 }
