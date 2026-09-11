@@ -10,6 +10,10 @@ SET
   map_y = COALESCE(map_y, ((('x' || substr(md5(id || ':' || domain), 1, 8))::bit(32)::bigint % 200000) - 100000)::double precision / 20.0)
 WHERE map_x IS NULL OR map_y IS NULL;
 
+ALTER TABLE knowledge_nodes
+  ADD COLUMN IF NOT EXISTS map_point POINT GENERATED ALWAYS AS (point(map_x, map_y)) STORED;
+
 CREATE INDEX IF NOT EXISTS knowledge_nodes_map_x_idx ON knowledge_nodes(map_x);
 CREATE INDEX IF NOT EXISTS knowledge_nodes_map_y_idx ON knowledge_nodes(map_y);
 CREATE INDEX IF NOT EXISTS knowledge_nodes_map_xy_idx ON knowledge_nodes(map_x, map_y);
+CREATE INDEX IF NOT EXISTS knowledge_nodes_map_point_gist_idx ON knowledge_nodes USING GIST (map_point);
