@@ -10,7 +10,7 @@ Human Knowledge Map treats knowledge as a graph rather than a list of courses. T
 2. **Curriculum Graph** — good ways to learn it.
 3. **Personal Knowledge Graph** — what a learner already knows, is learning, or is likely to forget.
 
-## Current version: v5.2
+## Current version: v6.2
 
 ### Explorer and learning layer
 
@@ -53,16 +53,29 @@ Human Knowledge Map treats knowledge as a graph rather than a list of courses. T
 
 ### Production data layer
 
-- **v4.3 PostgreSQL Schema** — normalized nodes, edges, provenance and indexes for persistent graph storage.
-- **v4.4 Graph Change Sets** — all edits are represented as atomic node/edge mutations.
-- **v4.5 Version History** — commits change sets into numbered graph snapshots for rollback and auditing.
-- **v4.6 Review Workflow** — draft → review → approved/rejected → published lifecycle.
-- **v4.7 Ingestion Jobs** — tracks extraction, normalization, dedupe, validation and publication stages.
-- **v4.8 Math Curriculum Catalog** — expands the curated mathematics backbone across arithmetic, algebra, geometry, calculus, linear algebra and probability.
-- **v4.9 Canonical Merge Engine** — decides whether incoming concepts should insert, merge or enter human review.
-- **v5.0 Review Queue API** — `GET/POST /api/review` provides the first backend surface for editorial review.
-- **v5.1 Graph Event Log** — append-only incremental events make downstream sync and cache invalidation possible.
-- **v5.2 PostgreSQL Repository Adapter** — implements the existing `GraphRepository` contract over SQL, including filters and recursive neighborhood traversal.
+- v4.3 PostgreSQL Schema
+- v4.4 Graph Change Sets
+- v4.5 Version History
+- v4.6 Review Workflow
+- v4.7 Ingestion Jobs
+- v4.8 Math Curriculum Catalog
+- v4.9 Canonical Merge Engine
+- v5.0 Review Queue API
+- v5.1 Graph Event Log
+- v5.2 PostgreSQL Repository Adapter
+
+### Knowledge operations layer
+
+- **v5.3 Admin Console** — `/admin` becomes the operational surface for datasets, review and publishing.
+- **v5.4 Repository Factory** — switch between in-memory and PostgreSQL-backed repositories through runtime configuration.
+- **v5.5 Batch Expansion Planner** — creates bounded, ontology-aware AI expansion batches instead of uncontrolled generation.
+- **v5.6 Import Preview** — previews insert / merge / review decisions and rejects dangling or self-referencing edges before publication.
+- **v5.7 Publish Pipeline** — approved change sets become canonical graph releases through one controlled publish function.
+- **v5.8 Expanded Math Curriculum Scaffold** — generates several hundred curriculum-shaped math scaffold nodes for ingestion and review experiments; these are explicitly non-authoritative until sourced and reviewed.
+- **v5.9 Operations Metrics** — review backlog, dataset failures, approval rate and operational health indicators.
+- **v6.0 Admin API** — `GET /api/admin` exposes canonical counts, curriculum scaffold size, dataset state and operational health.
+- **v6.1 Release Manifest** — each knowledge data release records version, datasets, change sets, graph size and a deterministic fingerprint.
+- **v6.2 Integrated Operations Dashboard** — `/admin` consumes the operations API and surfaces canonical size, scaffold size, review health and publishing status.
 
 The central learning path remains easy to inspect:
 
@@ -73,9 +86,11 @@ The central learning path remains easy to inspect:
 ```text
 Curriculum / textbook / paper / expert / AI proposal
                     ↓
+            Controlled expansion batch
+                    ↓
                Ingestion Job
                     ↓
-        Normalize + dedupe + validate
+       Import preview / normalize / dedupe
                     ↓
              Canonical Merge
                     ↓
@@ -83,7 +98,9 @@ Curriculum / textbook / paper / expert / AI proposal
                     ↓
                Review Queue
                     ↓
-                 Publish
+              Publish Pipeline
+                    ↓
+             Release Manifest
                     ↓
          PostgreSQL Knowledge Store
                     ↓
@@ -92,11 +109,20 @@ Curriculum / textbook / paper / expert / AI proposal
  Graph API / Search / LOD / viewport clients
 ```
 
-The project intentionally separates proposals from canonical knowledge. AI-generated content never becomes authoritative merely because a model produced it.
+AI-generated content never becomes canonical merely because a model produced it. Curriculum scaffold data is also treated as a proposal until mapped to sources and reviewed.
 
-## PostgreSQL
+## Runtime storage
 
-The initial schema is in `db/schema.sql`. `PostgresGraphRepository` is dependency-independent: provide a small SQL executor backed by your preferred PostgreSQL client.
+The initial PostgreSQL schema is in `db/schema.sql`. The repository layer is dependency-independent: wire any PostgreSQL client through the `SqlExecutor` interface.
+
+```bash
+GRAPH_STORE=memory
+# or
+GRAPH_STORE=postgres
+DATABASE_URL=postgres://...
+DATABASE_POOL_SIZE=10
+DATABASE_STATEMENT_TIMEOUT_MS=5000
+```
 
 ## Run locally
 
@@ -109,6 +135,8 @@ Open:
 
 - `http://localhost:3000` — adaptive knowledge explorer
 - `http://localhost:3000/lab` — progressive large-graph lab
+- `http://localhost:3000/admin` — knowledge operations console
+- `http://localhost:3000/api/admin` — operational summary API
 
 Type-check:
 
