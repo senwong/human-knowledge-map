@@ -16,10 +16,14 @@ if [ ! -f .env ]; then
   fi
 fi
 
+run_migrations() {
+  sh scripts/migrate.sh
+}
+
 case "$ACTION" in
   up)
     $COMPOSE up -d --build
-    ./scripts/migrate.sh
+    run_migrations
     echo "Human Knowledge Map: http://localhost:${PORT:-3000}"
     ;;
   down)
@@ -27,7 +31,7 @@ case "$ACTION" in
     ;;
   restart)
     $COMPOSE up -d --build
-    ./scripts/migrate.sh
+    run_migrations
     $COMPOSE restart app
     ;;
   logs)
@@ -39,7 +43,7 @@ case "$ACTION" in
   pull)
     git pull --ff-only
     $COMPOSE up -d --build
-    ./scripts/migrate.sh
+    run_migrations
     ;;
   reset-db)
     echo "This removes the PostgreSQL volume and all persisted knowledge data."
@@ -48,6 +52,7 @@ case "$ACTION" in
     [ "$answer" = "RESET" ] || exit 1
     $COMPOSE down -v
     $COMPOSE up -d --build
+    run_migrations
     ;;
   *)
     echo "Usage: $0 {up|down|restart|logs|status|pull|reset-db}" >&2
