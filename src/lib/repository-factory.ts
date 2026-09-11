@@ -24,12 +24,35 @@ export interface SqlExecutor {
   query<T = unknown>(sql: string, params?: unknown[]): Promise<{ rows: T[] }>;
 }
 
+let sharedSqlExecutor: SqlExecutor | undefined;
+
+async function createPostgresExecutor(config: DatabaseConfig): Promise<SqlExecutor> {
+  if (sharedSqlExecutor) return sharedSqlExecutor;
+  if (!config.url) throw new Error('DATABASE_URL is required when GRAPH_STORE=postgres.');
+
+  const { Pool } = await import('pg');
+  const pool = new Pool({
+    connectionString: config.url,
+    max: config.maxConnections,
+    statement_timeout: config.statementTimeoutMs,
+    application_name: 'human-knowledge-map'
+  });
+
+  sharedSqlExecutor = {
+    async query<T>(sql: string, params?: unknown[]) {
+      const result = await pool.query(sql, params);
+      return { rows: result.rows as T[] };
+    }
+  };
+  return sharedSqlExecutor;
+}
+
 export async function createGraphRepository(options?: { sql?: SqlExecutor }): Promise<GraphRepository> {
   const config = getDatabaseConfig();
   if (config.kind === 'postgres') {
-    if (!options?.sql) throw new Error('GRAPH_STORE=postgres requires a SqlExecutor. Wire your preferred PostgreSQL driver at the deployment boundary.');
+    const sql = options?.sql ?? await createPostgresExecutor(config);
     const { PostgresGraphRepository } = await import('./postgres-graph-repository');
-    return new PostgresGraphRepository(options.sql);
+    return new PostgresGraphRepository(sql);
   }
   return new InMemoryGraphRepository(mathFoundationNodes, mathFoundationEdges);
 }
