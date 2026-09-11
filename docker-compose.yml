@@ -1,0 +1,47 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: human-knowledge-map
+    restart: unless-stopped
+    ports:
+      - "${PORT:-3000}:3000"
+    environment:
+      GRAPH_STORE: postgres
+      DATABASE_URL: postgresql://${POSTGRES_USER:-hkm}:${POSTGRES_PASSWORD:-hkm_change_me}@postgres:5432/${POSTGRES_DB:-human_knowledge_map}
+      DATABASE_POOL_SIZE: ${DATABASE_POOL_SIZE:-10}
+      DATABASE_STATEMENT_TIMEOUT_MS: ${DATABASE_STATEMENT_TIMEOUT_MS:-5000}
+      DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY:-}
+      DEEPSEEK_BASE_URL: ${DEEPSEEK_BASE_URL:-https://api.deepseek.com/chat/completions}
+      DEEPSEEK_MODEL: ${DEEPSEEK_MODEL:-deepseek-chat}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:3000/api/admin"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  postgres:
+    image: postgres:17-alpine
+    container_name: human-knowledge-map-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-hkm}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-hkm_change_me}
+      POSTGRES_DB: ${POSTGRES_DB:-human_knowledge_map}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./db/schema.sql:/docker-entrypoint-initdb.d/001_schema.sql:ro
+      - ./db/migrations/002_review_and_history.sql:/docker-entrypoint-initdb.d/002_review_and_history.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-hkm} -d ${POSTGRES_DB:-human_knowledge_map}"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+
+volumes:
+  postgres_data:
