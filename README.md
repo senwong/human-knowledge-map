@@ -10,7 +10,7 @@ Human Knowledge Map treats knowledge as a graph rather than a list of courses. T
 2. **Curriculum Graph** — good ways to learn it.
 3. **Personal Knowledge Graph** — what a learner already knows, is learning, or is likely to forget.
 
-## Current version: v6.2
+## Current version: v7.2
 
 ### Explorer and learning layer
 
@@ -66,22 +66,35 @@ Human Knowledge Map treats knowledge as a graph rather than a list of courses. T
 
 ### Knowledge operations layer
 
-- **v5.3 Admin Console** — `/admin` becomes the operational surface for datasets, review and publishing.
-- **v5.4 Repository Factory** — switch between in-memory and PostgreSQL-backed repositories through runtime configuration.
-- **v5.5 Batch Expansion Planner** — creates bounded, ontology-aware AI expansion batches instead of uncontrolled generation.
-- **v5.6 Import Preview** — previews insert / merge / review decisions and rejects dangling or self-referencing edges before publication.
-- **v5.7 Publish Pipeline** — approved change sets become canonical graph releases through one controlled publish function.
-- **v5.8 Expanded Math Curriculum Scaffold** — generates several hundred curriculum-shaped math scaffold nodes for ingestion and review experiments; these are explicitly non-authoritative until sourced and reviewed.
-- **v5.9 Operations Metrics** — review backlog, dataset failures, approval rate and operational health indicators.
-- **v6.0 Admin API** — `GET /api/admin` exposes canonical counts, curriculum scaffold size, dataset state and operational health.
-- **v6.1 Release Manifest** — each knowledge data release records version, datasets, change sets, graph size and a deterministic fingerprint.
-- **v6.2 Integrated Operations Dashboard** — `/admin` consumes the operations API and surfaces canonical size, scaffold size, review health and publishing status.
+- v5.3 Admin Console
+- v5.4 Repository Factory
+- v5.5 Batch Expansion Planner
+- v5.6 Import Preview
+- v5.7 Publish Pipeline
+- v5.8 Expanded Math Curriculum Scaffold
+- v5.9 Operations Metrics
+- v6.0 Admin API
+- v6.1 Release Manifest
+- v6.2 Integrated Operations Dashboard
+
+### Maintenance and editorial layer
+
+- **v6.3 Database Migration Registry** — ordered migration metadata and review/history SQL migration.
+- **v6.4 Canonical Seed Planner** — builds safe, reproducible seed batches before persistence.
+- **v6.5 Review Diff Engine** — converts change-set mutations into reviewer-friendly diffs and counts.
+- **v6.6 Rollback Planner** — creates inverse change sets from pre-publication snapshots.
+- **v6.7 Review Workspace** — `/admin/review` provides an editorial workspace for inspecting queued change sets and notes.
+- **v6.8 Controlled Generation Console** — `/admin/generate` exposes bounded AI proposal generation without bypassing review.
+- **v6.9 Provenance Coverage** — measures sourced, reviewed and verified coverage and identifies missing provenance.
+- **v7.0 Canonical Math Seed** — mathematics nodes are packaged with explicit provenance/review status; internal editorial review is not treated as external certification.
+- **v7.1 Publish / Rollback API** — `POST /api/publish` returns release manifests or rollback plans while keeping canonical mutation behind the repository transaction layer.
+- **v7.2 Knowledge Quality Dashboard** — `/admin/quality` surfaces provenance coverage and missing-source work.
 
 The central learning path remains easy to inspect:
 
 `计数 → 自然数 → 加法 → 乘法 → 分数 → 代数 → 函数 → 微积分 / 线性代数 / 概率 → 神经网络 → Attention → Transformer → FlashAttention`
 
-## Production knowledge lifecycle
+## Knowledge lifecycle
 
 ```text
 Curriculum / textbook / paper / expert / AI proposal
@@ -96,9 +109,11 @@ Curriculum / textbook / paper / expert / AI proposal
                     ↓
               Change Set
                     ↓
-               Review Queue
+              Review Diff
                     ↓
-              Publish Pipeline
+             Editorial Review
+                    ↓
+              Publish Plan
                     ↓
              Release Manifest
                     ↓
@@ -109,11 +124,11 @@ Curriculum / textbook / paper / expert / AI proposal
  Graph API / Search / LOD / viewport clients
 ```
 
-AI-generated content never becomes canonical merely because a model produced it. Curriculum scaffold data is also treated as a proposal until mapped to sources and reviewed.
+AI-generated content never becomes canonical merely because a model produced it. Curriculum scaffold data is also treated as a proposal until mapped to sources and reviewed. `reviewed` means internal editorial review; stronger `verified` status is reserved for a stricter external-source verification workflow.
 
-## Runtime storage
+## Database and runtime storage
 
-The initial PostgreSQL schema is in `db/schema.sql`. The repository layer is dependency-independent: wire any PostgreSQL client through the `SqlExecutor` interface.
+The initial PostgreSQL schema is in `db/schema.sql`; later migrations are tracked in `db/migrations/` and `src/lib/migrations.ts`.
 
 ```bash
 GRAPH_STORE=memory
@@ -136,7 +151,11 @@ Open:
 - `http://localhost:3000` — adaptive knowledge explorer
 - `http://localhost:3000/lab` — progressive large-graph lab
 - `http://localhost:3000/admin` — knowledge operations console
+- `http://localhost:3000/admin/review` — change-set review workspace
+- `http://localhost:3000/admin/generate` — controlled AI generation console
+- `http://localhost:3000/admin/quality` — provenance and editorial quality dashboard
 - `http://localhost:3000/api/admin` — operational summary API
+- `POST /api/publish` — release or rollback planning API
 
 Type-check:
 
