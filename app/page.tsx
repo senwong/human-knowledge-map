@@ -1,11 +1,10 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { Background, Controls, MiniMap, ReactFlow, type Edge, type Node } from '@xyflow/react';
 import type { CanonicalKnowledgeEdge, CanonicalKnowledgeNode } from '../src/data/math-foundation';
 import { knowledgeSources, sourceConfidence } from '../src/data/sources';
 import { useLearnerState, type LearningStatus } from '../src/hooks/use-learner-state';
-import type { KnowledgeNodeData } from '../src/types/knowledge';
+import { WebglKnowledgeMap } from '../src/components/webgl-knowledge-map';
 
 const statusLabel: Record<LearningStatus, string> = {
   mastered: '已掌握',
@@ -13,14 +12,6 @@ const statusLabel: Record<LearningStatus, string> = {
   weak: '薄弱',
   review: '待复习',
   unlearned: '未学习'
-};
-
-const statusBorder: Record<LearningStatus, string> = {
-  mastered: '#34d399',
-  learning: '#38bdf8',
-  weak: '#fb7185',
-  review: '#fbbf24',
-  unlearned: 'rgba(255,255,255,.16)'
 };
 
 type GraphResponse = {
@@ -45,53 +36,6 @@ function mergeGraph(current: GraphResponse, incoming: GraphResponse): GraphRespo
     total: Math.max(current.total, incoming.total, nodes.size),
     source: incoming.source ?? current.source
   };
-}
-
-function layoutNodes(nodes: CanonicalKnowledgeNode[], learner: ReturnType<typeof useLearnerState>['state'], selectedId: string | null, query: string): Node<KnowledgeNodeData>[] {
-  const domainIndex = new Map<string, number>();
-  const domainCounts = new Map<string, number>();
-  const text = query.trim().toLowerCase();
-
-  return nodes.map((node) => {
-    if (!domainIndex.has(node.domain)) domainIndex.set(node.domain, domainIndex.size);
-    const domain = domainIndex.get(node.domain) ?? 0;
-    const localIndex = domainCounts.get(node.domain) ?? 0;
-    domainCounts.set(node.domain, localIndex + 1);
-    const status = learner[node.id]?.status ?? 'unlearned';
-    const matches = !text || node.label.toLowerCase().includes(text) || node.domain.toLowerCase().includes(text) || node.educationLevel.toLowerCase().includes(text);
-    const selected = node.id === selectedId;
-
-    return {
-      id: node.id,
-      position: {
-        x: domain * 430 + (localIndex % 3) * 150,
-        y: Math.floor(localIndex / 3) * 125 + node.difficulty * 10
-      },
-      data: {
-        label: node.label,
-        description: '',
-        domain: node.domain,
-        educationLevel: node.educationLevel,
-        difficulty: node.difficulty,
-        zoomLevel: Math.min(20, Math.max(2, node.difficulty * 2)),
-        type: node.type,
-        aliases: node.aliases,
-        learningStatus: status
-      },
-      style: {
-        width: 140,
-        borderRadius: 16,
-        border: `1px solid ${selected ? '#a78bfa' : statusBorder[status]}`,
-        padding: 10,
-        fontWeight: 700,
-        fontSize: 12,
-        background: selected ? 'rgba(88,28,135,.92)' : 'rgba(15,23,42,.94)',
-        color: 'white',
-        opacity: matches ? 1 : 0.2,
-        boxShadow: selected ? '0 0 0 2px rgba(167,139,250,.2),0 16px 42px rgba(0,0,0,.3)' : '0 10px 28px rgba(0,0,0,.2)'
-      }
-    };
-  });
 }
 
 export default function Home() {
@@ -131,18 +75,6 @@ export default function Home() {
     }
   }
 
-  const nodes = useMemo(() => layoutNodes(graph.nodes, learner, selectedId, query), [graph.nodes, learner, selectedId, query]);
-  const visible = useMemo(() => new Set(nodes.map((node) => node.id)), [nodes]);
-  const edges: Edge[] = useMemo(() => graph.edges
-    .filter((edge) => visible.has(edge.source) && visible.has(edge.target))
-    .map((edge) => ({
-      id: edgeId(edge),
-      source: edge.source,
-      target: edge.target,
-      label: edge.relation,
-      style: { stroke: '#64748b', strokeWidth: 1.6, opacity: 0.55 }
-    })), [graph.edges, visible]);
-
   const selected = selectedId ? graph.nodes.find((node) => node.id === selectedId) : undefined;
   const selectedRecord = selectedId ? learner[selectedId] : undefined;
   const selectedSources = selectedId ? (knowledgeSources[selectedId] ?? []) : [];
@@ -153,7 +85,9 @@ export default function Home() {
       if (edge.source === selectedId) ids.add(edge.target);
       if (edge.target === selectedId) ids.add(edge.source);
     });
-    return [...ids].map((id) => graph.nodes.find((node) => node.id === id)).filter((node): node is CanonicalKnowledgeNode => Boolean(node));
+    return [...ids]
+      .map((id) => graph.nodes.find((node) => node.id === id))
+      .filter((node): node is CanonicalKnowledgeNode => Boolean(node));
   }, [graph.edges, graph.nodes, selectedId]);
 
   const updateStatus = (status: LearningStatus) => {
@@ -169,7 +103,7 @@ export default function Home() {
   return (
     <main className="app-shell">
       <header className="topbar">
-        <div><p className="eyebrow">HUMAN KNOWLEDGE MAP · v7.2</p><h1>人类知识地图</h1></div>
+        <div><p className="eyebrow">HUMAN KNOWLEDGE MAP · WEBGL</p><h1>人类知识地图</h1></div>
         <div className="topbar-actions">
           <input aria-label="搜索知识点" placeholder="搜索知识、领域或学习阶段…" value={query} onChange={(e) => setQuery(e.target.value)} />
           <a className="ghost-button" href="/admin">知识运营</a>
@@ -177,10 +111,11 @@ export default function Home() {
       </header>
 
       <div className="pathbar">
-        <span>全局知识视图</span>
+        <span>WebGL 全局知识视图</span>
         <strong>{graph.nodes.length} / {graph.total || graph.nodes.length} 个已加载知识点</strong>
         <span>{graph.edges.length} 条关系</span>
         <span className="progress-chip">个人掌握度 {progress}%</span>
+        <span className="progress-chip">GPU 渲染</span>
         <span className="progress-chip">数据源：{graph.source === 'canonical-seed' ? 'Canonical Seed（数据库暂为空）' : 'Knowledge Repository'}</span>
         {loading && <span>正在加载…</span>}
         {error && <span style={{ color: '#fb7185' }}>{error}</span>}
@@ -188,28 +123,24 @@ export default function Home() {
 
       <section className="workspace">
         <div className="graph-wrap">
-          <ReactFlow
-            nodes={nodes}
-            edges={edges}
-            onNodeClick={(_, node) => void expandNode(node.id, 1)}
-            onNodeDoubleClick={(_, node) => void expandNode(node.id, 2)}
-            fitView
-            minZoom={0.06}
-            maxZoom={2.8}
-            nodesDraggable
-            proOptions={{ hideAttribution: true }}
-          >
-            <Background gap={28} size={1} /><MiniMap zoomable pannable /><Controls />
-          </ReactFlow>
-          <div className="map-hint">单击展开直接相关知识 · 双击展开 2 层邻域 · 搜索只高亮，不会把其它知识从地图删除</div>
-          <div className="map-stats"><span>{graph.nodes.length} 节点</span><span>{graph.edges.length} 关系</span><span>持续增量加载</span></div>
+          <WebglKnowledgeMap
+            nodes={graph.nodes}
+            edges={graph.edges}
+            learner={learner}
+            selectedId={selectedId}
+            query={query}
+            onNodeClick={(id) => void expandNode(id, 1)}
+            onNodeDoubleClick={(id) => void expandNode(id, 2)}
+          />
+          <div className="map-hint">GPU 渲染 · 滚轮缩放 · 拖动画布 · 单击展开 1 层 · 双击展开 2 层</div>
+          <div className="map-stats"><span>{graph.nodes.length} 节点</span><span>{graph.edges.length} 关系</span><span>WebGL</span><span>按需增量加载</span></div>
         </div>
 
         <aside className="detail-panel">
           {selected ? <>
             <div className="detail-badges"><span>{selected.domain}</span><span>{selected.educationLevel}</span><span>难度 {selected.difficulty}</span></div>
             <h2>{selected.label}</h2>
-            <p className="detail-description">{selected.label} 是当前知识图谱中的 {selected.type} 节点；点击相关知识可以继续向外探索。</p>
+            <p className="detail-description">{selected.description || `${selected.label} 是当前知识图谱中的 ${selected.type} 节点；点击相关知识可以继续向外探索。`}</p>
             <dl><div><dt>类型</dt><dd>{selected.type}</dd></div><div><dt>难度</dt><dd>{selected.difficulty}</dd></div><div><dt>来源可信度</dt><dd>{selectedId ? sourceConfidence(selectedId) : 0}%</dd></div></dl>
 
             <section className="panel-section"><h3>相关知识</h3>{related.length ? related.map((node) => <button className="recommendation" key={node.id} onClick={() => void expandNode(node.id, 1)}><strong>{node.label}</strong><span>{node.domain} · {node.educationLevel}</span></button>) : <p className="muted">单击当前节点后会加载它的直接相关知识。</p>}</section>
