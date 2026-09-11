@@ -1,12 +1,12 @@
 {
   "name": "human-knowledge-map",
-  "version": "1.0.0",
+  "version": "2.2.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@xyflow/react": "^12.3.6",
