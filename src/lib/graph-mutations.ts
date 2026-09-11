@@ -19,16 +19,20 @@ export interface MutableGraph {
   edges: CanonicalKnowledgeEdge[];
 }
 
+export function canonicalEdgeId(edge: CanonicalKnowledgeEdge) {
+  return `${edge.source}:${edge.relation}:${edge.target}`;
+}
+
 export function applyChangeSet(graph: MutableGraph, changeSet: GraphChangeSet): MutableGraph {
   const nodes = new Map(graph.nodes.map((node) => [node.id, node]));
-  const edges = new Map(graph.edges.map((edge) => [edge.id, edge]));
+  const edges = new Map(graph.edges.map((edge) => [canonicalEdgeId(edge), edge]));
   for (const mutation of changeSet.mutations) {
     if (mutation.type === 'upsert-node') nodes.set(mutation.node.id, mutation.node);
     if (mutation.type === 'delete-node') {
       nodes.delete(mutation.nodeId);
       for (const [id, edge] of edges) if (edge.source === mutation.nodeId || edge.target === mutation.nodeId) edges.delete(id);
     }
-    if (mutation.type === 'upsert-edge') edges.set(mutation.edge.id, mutation.edge);
+    if (mutation.type === 'upsert-edge') edges.set(canonicalEdgeId(mutation.edge), mutation.edge);
     if (mutation.type === 'delete-edge') edges.delete(mutation.edgeId);
   }
   return { nodes: [...nodes.values()], edges: [...edges.values()] };
