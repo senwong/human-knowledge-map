@@ -20,7 +20,7 @@ type NodeRow = {
 };
 type EdgeRow = { source_id: string; target_id: string; relation: CanonicalKnowledgeEdge['relation'] };
 
-const toNode = (row: NodeRow): CanonicalKnowledgeNode => ({
+const toNode = (row: NodeRow) => ({
   id: row.id,
   label: row.label,
   description: row.description ?? '',
@@ -28,7 +28,8 @@ const toNode = (row: NodeRow): CanonicalKnowledgeNode => ({
   educationLevel: row.education_level,
   type: row.node_type,
   difficulty: row.difficulty,
-  aliases: row.aliases ?? []
+  aliases: row.aliases ?? [],
+  ...(Number.isFinite(row.map_x) && Number.isFinite(row.map_y) ? { x: Number(row.map_x), y: Number(row.map_y) } : {})
 });
 const toEdge = (row: EdgeRow): CanonicalKnowledgeEdge => ({ source: row.source_id, target: row.target_id, relation: row.relation });
 
