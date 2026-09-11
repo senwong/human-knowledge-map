@@ -1,7 +1,7 @@
 import type { Edge, Node } from '@xyflow/react';
 import type { KnowledgeNodeData } from '../types/knowledge';
 
-const concepts: Array<[string, string, string, number, number, string]> = [
+const concepts: Array<[string, string, string, string, number, string]> = [
   ['natural-numbers','自然数','小学数学','primary',1,'理解计数、大小与顺序，是后续数学学习的起点。'],
   ['addition','加法','小学数学','primary',2,'把数量合并起来的基本运算。'],
   ['multiplication','乘法','小学数学','primary',3,'重复加法的抽象，也是比例、代数和组合结构的基础。'],
