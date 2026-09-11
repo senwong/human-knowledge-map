@@ -1,14 +1,20 @@
 FROM node:22-bookworm-slim AS base
 
-RUN printf '%s\n' \
-  'deb https://mirrors.ustc.edu.cn/debian bookworm main contrib non-free non-free-firmware' \
-  'deb https://mirrors.ustc.edu.cn/debian bookworm-updates main contrib non-free non-free-firmware' \
-  'deb https://mirrors.ustc.edu.cn/debian-security bookworm-security main contrib non-free non-free-firmware' \
-  > /etc/apt/sources.list && \
-  rm -f /etc/apt/sources.list.d/debian.sources && \
-  apt-get update && \
-  apt-get install -y --no-install-recommends ca-certificates wget && \
-  rm -rf /var/lib/apt/lists/*
+# Bootstrap the system trust store using the Debian sources bundled with the
+# official Node image. Only after CA certificates exist do we switch APT to
+# the HTTPS USTC mirror. This avoids the circular failure where apt needs TLS
+# certificates in order to download the ca-certificates package itself.
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends ca-certificates wget && \
+    update-ca-certificates && \
+    printf '%s\n' \
+      'deb https://mirrors.ustc.edu.cn/debian bookworm main contrib non-free non-free-firmware' \
+      'deb https://mirrors.ustc.edu.cn/debian bookworm-updates main contrib non-free non-free-firmware' \
+      'deb https://mirrors.ustc.edu.cn/debian-security bookworm-security main contrib non-free non-free-firmware' \
+      > /etc/apt/sources.list && \
+    rm -f /etc/apt/sources.list.d/debian.sources && \
+    apt-get update && \
+    rm -rf /var/lib/apt/lists/*
 
 FROM base AS deps
 WORKDIR /app
