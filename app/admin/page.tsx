@@ -20,8 +20,22 @@ export default function AdminPage() {
   useEffect(() => { fetch('/api/admin').then((r) => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); }).then(setRemote).catch((e) => setError(e instanceof Error ? e.message : 'Failed to load admin summary')); }, []);
 
   const metrics = useMemo(() => calculateGraphMetrics(
-    mathFoundationNodes.map((node, index) => ({ id: node.id, position: { x: index * 10, y: 0 }, data: { ...node, description: node.description ?? '', zoomLevel: Math.min(20, node.difficulty * 2), learningStatus: 'unlearned' } } as any)),
-    mathFoundationEdges.map((edge) => ({ id: edge.id, source: edge.source, target: edge.target, label: edge.relation })) as any
+    mathFoundationNodes.map((node, index) => ({
+      id: node.id,
+      position: { x: index * 10, y: 0 },
+      data: {
+        ...node,
+        description: '',
+        zoomLevel: Math.min(20, node.difficulty * 2),
+        learningStatus: 'unlearned'
+      }
+    } as any)),
+    mathFoundationEdges.map((edge) => ({
+      id: `${edge.source}:${edge.relation}:${edge.target}`,
+      source: edge.source,
+      target: edge.target,
+      label: edge.relation
+    })) as any
   ), []);
   const datasets = useMemo(() => summarizeDatasets(starterDatasets), []);
   const canonicalNodes = remote?.canonical.nodes ?? metrics.nodes;
