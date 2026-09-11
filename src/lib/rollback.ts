@@ -1,8 +1,9 @@
 import type { GraphChangeSet, GraphMutation, MutableGraph } from './graph-mutations';
+import { canonicalEdgeId } from './graph-mutations';
 
 export function invertChangeSet(before: MutableGraph, changeSet: GraphChangeSet): GraphChangeSet {
   const nodeById = new Map(before.nodes.map((node) => [node.id, node]));
-  const edgeById = new Map(before.edges.map((edge) => [edge.id, edge]));
+  const edgeById = new Map(before.edges.map((edge) => [canonicalEdgeId(edge), edge]));
   const inverse: GraphMutation[] = [];
 
   for (const mutation of [...changeSet.mutations].reverse()) {
@@ -13,8 +14,9 @@ export function invertChangeSet(before: MutableGraph, changeSet: GraphChangeSet)
       const previous = nodeById.get(mutation.nodeId);
       if (previous) inverse.push({ type: 'upsert-node', node: previous });
     } else if (mutation.type === 'upsert-edge') {
-      const previous = edgeById.get(mutation.edge.id);
-      inverse.push(previous ? { type: 'upsert-edge', edge: previous } : { type: 'delete-edge', edgeId: mutation.edge.id });
+      const edgeId = canonicalEdgeId(mutation.edge);
+      const previous = edgeById.get(edgeId);
+      inverse.push(previous ? { type: 'upsert-edge', edge: previous } : { type: 'delete-edge', edgeId });
     } else {
       const previous = edgeById.get(mutation.edgeId);
       if (previous) inverse.push({ type: 'upsert-edge', edge: previous });
